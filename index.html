@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy One Year, Mi Amor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&family=Caveat:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Lato', sans-serif; }
+        h1, h2, .serif { font-family: 'Playfair Display', serif; }
+        .handwritten { font-family: 'Caveat', cursive; }
+
+        html { scroll-behavior: smooth; }
+
+        .cursor-heart {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            background: #ec4899;
+            transform: rotate(-45deg);
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .cursor-heart::before, .cursor-heart::after {
+            content: "";
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #ec4899;
+            border-radius: 50%;
+        }
+        .cursor-heart::before { top: -10px; left: 0; }
+        .cursor-heart::after { left: 10px; top: 0; }
+
+        #intro-overlay { transition: transform 0.8s cubic-bezier(0.7, 0, 0.3, 1); }
+        .slide-up { transform: translateY(-100%); }
+
+        .pop-photo {
+            transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            opacity: 0;
+            transform: scale(0.5) rotate(var(--rot));
+        }
+        .pop-photo.visible {
+            opacity: 1;
+            transform: scale(1) rotate(var(--rot));
+        }
+
+        .marquee-container { overflow: hidden; white-space: nowrap; }
+        .marquee-content {
+            display: inline-flex;
+            animation: scroll 20s linear infinite; /* DOUBLED SPEED */
+        }
+        @keyframes scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+        }
+        .floating { animation: float 4s ease-in-out infinite; }
+        .floating-delay { animation: float 5s ease-in-out infinite 1s; }
+
+        /* Memory Map Styles */
+        .heart-rain-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .falling-heart {
+            position: absolute;
+            top: -10%;
+            color: rgba(236, 72, 153, 0.6);
+            animation: fall linear infinite;
+            font-size: 20px;
+        }
+        @keyframes fall {
+            to { transform: translateY(110vh) rotate(360deg); }
+        }
+        .map-pin {
+            position: absolute;
+            transform: translate(-50%, -100%);
+            cursor: pointer;
+            z-index: 10;
+            transition: transform 0.2s;
+        }
+        .map-pin:hover { transform: translate(-50%, -100%) scale(1.1); }
+        .pin-bounce { animation: bounce 2s infinite; }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0) translate(-50%, -100%); }
+            50% { transform: translateY(-10px) translate(-50%, -100%); }
+        }
+        .polaroid {
+            background: white;
+            padding: 12px 12px 40px 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1), 0 10px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, z-index 0s;
+            position: relative;
+        }
+        .polaroid:hover {
+            transform: scale(1.05) rotate(0deg) !important;
+            z-index: 50;
+            box-shadow: 0 20px 25px rgba(0,0,0,0.15);
+        }
+        .modal-backdrop {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+        }
+
+        /* --- PAPER PLANE ANIMATION --- */
+        #final-letter-section {
+            display: none;
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+        #final-letter-section.visible {
+            display: flex;
+            opacity: 1;
+        }
+
+        .paper-plane-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .paper-plane {
+            width: 100px;
+            height: 100px;
+            position: absolute;
+            left: -150px;
+            top: 50%;
+            transform: translateY(-50%);
+            animation: flyPlane 3s forwards ease-in-out;
+            filter: drop-shadow(0 10px 10px rgba(0,0,0,0.2));
+        }
+
+        @keyframes flyPlane {
+            0% { left: -150px; transform: translateY(-50%) rotate(0deg); }
+            40% { left: 50%; top: 40%; transform: translate(-50%, -50%) rotate(-10deg) scale(1.2); }
+            60% { left: 50%; top: 40%; transform: translate(-50%, -50%) rotate(0deg) scale(1.2); opacity: 1; }
+            100% { left: 50%; top: 50%; transform: translate(-50%, -50%) scale(5); opacity: 0; }
+        }
+
+        /* Letter Unfold Animation */
+        .love-letter-wrapper {
+            transform: scale(0.8) translateY(50px);
+            opacity: 0;
+            transition: all 1s ease 2.5s; /* Wait for plane to finish */
+        }
+        .love-letter-wrapper.show {
+            transform: scale(1) translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-pink-50 text-gray-900 overflow-x-hidden selection:bg-pink-200">
+
+    <div id="cursor-hearts-container"></div>
+
+    <!-- INTRO SECTION -->
+    <div id="intro-overlay" class="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center p-4">
+        <div class="text-center max-w-md">
+            <h1 class="text-5xl md:text-7xl font-bold text-gray-900 mb-8 tracking-tight">Will you be<br>my Valentine?</h1>
+            <div class="flex gap-6 justify-center items-center mt-8">
+                <button onclick="enterSite()" class="group relative px-8 py-4 bg-pink-500 text-white text-xl font-bold rounded-full shadow-lg hover:bg-pink-600 hover:scale-105 transition-all duration-300 overflow-hidden">
+                    <span class="relative z-10">YES</span>
+                    <div class="absolute inset-0 h-full w-full bg-pink-400 scale-0 rounded-full transition-transform duration-300 group-hover:scale-100"></div>
+                </button>
+                <button onclick="showNoModal()" class="px-8 py-4 border-2 border-gray-300 text-gray-500 text-xl font-bold rounded-full hover:border-red-400 hover:text-red-400 transition-colors duration-300">NO</button>
+            </div>
+        </div>
+        <div id="no-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+            <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-sm text-center">
+                <div class="text-4xl mb-4">😏</div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-2">Do you think you have a choice?</h3>
+                <p class="text-gray-600 mb-6">Just go and click yes!</p>
+                <button onclick="hideNoModal()" class="w-full py-3 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-800 transition-colors">Okay, fine! 😘</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN WEBSITE CONTENT -->
+    <main id="main-site" class="opacity-0 transition-opacity duration-1000">
+        
+        <!-- HERO SECTION -->
+        <section class="min-h-screen relative flex items-center justify-center overflow-hidden pt-20">
+            <div class="absolute top-20 left-10 text-pink-200 text-9xl opacity-20 floating">♥</div>
+            <div class="absolute bottom-20 right-10 text-pink-200 text-8xl opacity-20 floating-delay">♥</div>
+            <div class="container mx-auto px-6 relative z-10 text-center">
+                <h1 class="text-6xl md:text-9xl font-bold text-gray-900 mb-6 tracking-tighter">Happy One Year,<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-rose-500">Mi Amor</span></h1>
+                <p class="text-xl md:text-2xl text-gray-600 max-w-2xl mx-auto mt-6 font-light">A little corner of the internet dedicated to us.</p>
+                <div class="relative h-64 md:h-96 mt-12 w-full max-w-4xl mx-auto pointer-events-none">
+                    <div class="pop-photo absolute top-0 left-1/4 w-32 h-40 md:w-48 md:h-64 bg-white p-2 shadow-xl rounded-sm" style="--rot: -6deg;"><img src=""https://drive.google.com/file/d/1-4QM7e58yUEO17oPmG8NPqoaupxy_IJ9/view?usp=sharing"" class="w-full h-full object-cover rounded-sm grayscale hover:grayscale-0 transition-all duration-500"></div>
+                    <div class="pop-photo absolute top-10 right-1/4 w-32 h-40 md:w-48 md:h-64 bg-white p-2 shadow-xl rounded-sm" style="--rot: 6deg;"><img src="https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80" class="w-full h-full object-cover rounded-sm grayscale hover:grayscale-0 transition-all duration-500"></div>
+                    <div class="pop-photo absolute bottom-0 left-1/3 w-32 h-40 md:w-48 md:h-64 bg-white p-2 shadow-xl rounded-sm" style="--rot: -3deg;"><img src="https://images.unsplash.com/photo-1529634597503-139d3726fed5?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80" class="w-full h-full object-cover rounded-sm grayscale hover:grayscale-0 transition-all duration-500"></div>
+                </div>
+            </div>
+            <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce text-gray-400"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg></div>
+        </section>
+
+        <!-- MARQUEE VIDEO SECTION (2x SPEED) -->
+        <section class="py-20 bg-white overflow-hidden border-y border-pink-100">
+            <div class="marquee-container w-full">
+                <div class="marquee-content flex gap-6 px-3">
+                    <div class="flex-shrink-0 w-64 h-96 bg-gray-100 rounded-2xl overflow-hidden shadow-md transform hover:scale-105 transition-transform duration-300"><video src="https://assets.mixkit.co/videos/preview/mixkit-romantic-couple-sitting-on-a-blanket-watching-the-sunset-43512-large.mp4" class="w-full h-full object-cover" autoplay muted loop playsinline></video></div>
+                    <div class="flex-shrink-0 w-96 h-64 bg-gray-100 rounded-2xl overflow-hidden shadow-md transform hover:scale-105 transition-transform duration-300 self-center"><video src="https://assets.mixkit.co/videos/preview/mixkit-young-couple-walking-through-a-forest-seen-from-above-43494-large.mp4" class="w-full h-full object-cover" autoplay muted loop playsinline></video></div>
+                    <div class="flex-shrink-0 w-64 h-96 bg-gray-100 rounded-2xl overflow-hidden shadow-md transform hover:scale-105 transition-transform duration-300"><video src="https://assets.mixkit.co/videos/preview/mixkit-couple-holding-hands-while-walking-in-a-park-43474-large.mp4" class="w-full h-full object-cover" autoplay muted loop playsinline></video></div>
+                    <div class="flex-shrink-0 w-80 h-80 bg-gray-100 rounded-2xl overflow-hidden shadow-md transform hover:scale-105 transition-transform duration-300"><video src="https://assets.mixkit.co/videos/preview/mixkit-couple-watching-the-sunset-together-34466-large.mp4" class="w-full h-full object-cover" autoplay muted loop playsinline></video></div>
+                     <div class="flex-shrink-0 w-64 h-96 bg-gray-100 rounded-2xl overflow-hidden shadow-md transform hover:scale-105 transition-transform duration-300"><video src="https://assets.mixkit.co/videos/preview/mixkit-romantic-couple-sitting-on-a-blanket-watching-the-sunset-43512-large.mp4" class="w-full h-full object-cover" autoplay muted loop playsinline></video></div>
+                    <div class="flex-shrink-0 w-96 h-64 bg-gray-100 rounded-2xl overflow-hidden shadow-md transform hover:scale-105 transition-transform duration-300 self-center"><video src="https://assets.mixkit.co/videos/preview/mixkit-young-couple-walking-through-a-forest-seen-from-above-43494-large.mp4" class="w-full h-full object-cover" autoplay muted loop playsinline></video></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MEMORY MAP SECTION -->
+        <section id="memory-map" class="relative min-h-screen w-full bg-[#fdf6f0] overflow-hidden flex flex-col items-center justify-center py-20">
+            <div class="absolute inset-0 opacity-30" style="background-image: url('https://www.transparenttextures.com/patterns/cream-paper.png');"></div>
+            <svg class="absolute inset-0 w-full h-full pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
+                <path d="M100,100 Q250,50 400,200 T700,300" fill="none" stroke="#ec4899" stroke-width="2" stroke-dasharray="5,5"/>
+                <path d="M800,600 Q600,700 500,500 T200,400" fill="none" stroke="#ec4899" stroke-width="2" stroke-dasharray="5,5"/>
+                <circle cx="200" cy="150" r="3" fill="#ec4899"/><circle cx="600" cy="400" r="3" fill="#ec4899"/><circle cx="400" cy="600" r="3" fill="#ec4899"/>
+            </svg>
+            <div id="heart-rain" class="heart-rain-container"></div>
+            <div class="relative z-20 text-center mb-12">
+                <h2 class="text-5xl md:text-7xl font-bold text-gray-800 mb-4 handwritten text-pink-600">Our Memory Map</h2>
+                <p class="text-gray-500 font-light">Click on the hearts to explore our journey</p>
+            </div>
+            <div class="relative w-full max-w-6xl h-[800px] md:h-[600px] mx-auto px-4">
+                <div id="map-pins-container" class="absolute inset-0 w-full h-full"></div>
+            </div>
+        </section>
+
+        <!-- QUIZ SECTION -->
+        <section id="quiz-section" class="min-h-screen bg-pink-50 flex items-center justify-center py-20 px-4">
+            <div class="bg-white p-8 md:p-12 rounded-3xl shadow-2xl max-w-2xl w-full relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-pink-300 to-rose-400"></div>
+                
+                <h2 class="text-4xl md:text-5xl font-bold text-center text-gray-800 mb-2 handwritten text-pink-600">A little test for you</h2>
+                <p class="text-center text-gray-500 mb-10">Answer all 5 questions correctly to unlock your letter.</p>
+
+                <div id="quiz-container">
+                    <!-- Progress -->
+                    <div class="flex justify-between mb-8 text-sm font-bold text-gray-400 uppercase tracking-widest">
+                        <span>Question <span id="current-q-num">1</span>/5</span>
+                        <span id="progress-text">20%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5 mb-10">
+                        <div id="progress-bar" class="bg-pink-500 h-2.5 rounded-full transition-all duration-500" style="width: 20%"></div>
+                    </div>
+
+                    <!-- Question -->
+                    <div class="mb-8 min-h-[120px] flex items-center justify-center">
+                        <h3 id="question-text" class="text-2xl md:text-3xl font-serif text-center text-gray-800 leading-relaxed"></h3>
+                    </div>
+
+                    <!-- Input -->
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <input type="text" id="answer-input" placeholder="Type your answer here..." 
+                            class="flex-1 px-6 py-4 rounded-xl border-2 border-gray-200 focus:border-pink-500 focus:outline-none text-lg transition-colors"
+                            onkeypress="handleEnter(event)">
+                        <button onclick="checkAnswer()" 
+                            class="px-8 py-4 bg-gray-900 text-white font-bold rounded-xl hover:bg-pink-600 transition-colors shadow-lg transform active:scale-95">
+                            Submit
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Success Message (Hidden initially) -->
+                <div id="quiz-success" class="hidden text-center py-10">
+                    <div class="text-6xl mb-4">✨</div>
+                    <h3 class="text-3xl font-bold text-gray-800 mb-4">All Correct!</h3>
+                    <p class="text-gray-600 mb-8">Your letter is arriving...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- FINAL LETTER SECTION (Hidden initially) -->
+        <section id="final-letter-section" class="min-h-screen flex items-center justify-center py-20 px-6 relative bg-pink-50">
+            <!-- Paper Plane Animation Element -->
+            <div id="plane-animation" class="paper-plane-container hidden">
+                <svg class="paper-plane" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 12h20" stroke="none"/>
+                    <path d="M22 2L11 13" stroke="white" fill="white"/>
+                    <path d="M22 2L15 22L11 13L2 9L22 2Z" fill="white" stroke="#ec4899"/>
+                </svg>
+            </div>
+
+            <div class="love-letter-wrapper max-w-3xl mx-auto bg-white p-10 md:p-16 shadow-2xl rounded-sm relative transform rotate-1 border border-gray-100">
+                <div class="absolute -top-6 -right-6 w-24 h-24 bg-pink-500 rounded-full flex items-center justify-center text-white font-bold rotate-12 shadow-lg border-4 border-white">
+                    <span class="text-xs uppercase tracking-widest text-center leading-tight">1 Year<br>Strong</span>
+                </div>
+                <h2 class="text-4xl font-bold text-gray-900 mb-8 serif italic">My Dearest,</h2>
+                <div class="prose prose-lg text-gray-600 font-light leading-relaxed space-y-6">
+                    <p>As I sit down to write this, I realize that words often fail to capture the magnitude of what I feel. But I will try, because you deserve to know exactly how much you mean to me.</p>
+                    <p>This past year has been a collection of moments—some loud, some quiet, but all beautiful because they were spent with you. From the late-night conversations to the quiet mornings, you have become my favorite part of every day.</p>
+                    <p>You are my best friend, my safe place, and my greatest adventure. I look forward to a million more years of laughter, growth, and love with you.</p>
+                    <p class="text-2xl font-serif text-pink-600 mt-8">Forever Yours,<br>[Your Name]</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer class="bg-gray-900 text-white py-12 text-center relative z-20">
+            <p class="text-pink-400 font-serif text-2xl mb-4">I love you.</p>
+            <p class="text-gray-500 text-sm">Made with ♥ for our Anniversary</p>
+        </footer>
+
+    </main>
+
+    <!-- Feedback Modal -->
+    <div id="feedback-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl transform transition-all scale-100">
+            <div id="feedback-icon" class="text-5xl mb-4"></div>
+            <h3 id="feedback-title" class="text-2xl font-bold text-gray-900 mb-2"></h3>
+            <p id="feedback-message" class="text-gray-600 mb-6"></p>
+            <button id="feedback-btn" class="w-full py-3 rounded-xl font-bold text-white transition-colors"></button>
+        </div>
+    </div>
+
+    <!-- Polaroid Modal (for Map) -->
+    <div id="polaroid-modal" class="fixed inset-0 z-[100] hidden modal-backdrop overflow-y-auto">
+        <div class="min-h-screen px-4 text-center flex items-center justify-center">
+            <div class="fixed inset-0 transition-opacity" onclick="closeModal()"></div>
+            <div class="relative inline-block bg-white/90 p-8 rounded-2xl shadow-2xl max-w-6xl w-full my-8 text-left align-middle transition-all transform">
+                <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-4xl">&times;</button>
+                <h3 id="modal-title" class="text-4xl font-bold text-center text-gray-800 mb-10 handwritten text-pink-600"></h3>
+                <div id="polaroid-grid" class="grid grid-cols-2 md:grid-cols-5 gap-8 justify-items-center"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Data ---
+        const questions = [
+            { q: "Name my dream car", a: "range rover" },
+            { q: "When did i say 'i love u' for the first time?", a: "30 november" },
+            { q: "How many stages of love were there in my poem", a: "7" },
+            { q: "What was my opinion of u when we talked as board members?", a: "materialistic" },
+            { q: "what do i ask you to say instead of 'Thank you'?", a: "i love you" }
+        ];
+
+        const memoryPins = [
+            { id: 'kisses', title: "Our Special Kisses", top: "20%", left: "20%", delay: "0s" },
+            { id: 'fav-u', title: "My Favourite Pics of U", top: "15%", left: "70%", delay: "0.5s" },
+            { id: 'fav-us', title: "My Favourite Pics of US", top: "50%", left: "50%", delay: "1s" },
+            { id: 'aesthetic', title: "Our Aesthetic", top: "40%", left: "15%", delay: "1.5s" },
+            { id: 'remember', title: "Things You Don’t Know I Remember", top: "60%", left: "80%", delay: "0.2s" },
+            { id: 'distance', title: "If Distance Didn’t Exist", top: "75%", left: "30%", delay: "0.7s" },
+            { id: 'replay', title: "Moments I Replay in My Head", top: "80%", left: "60%", delay: "1.2s" },
+            { id: 'screenshots', title: "Cute Screenshots of you", top: "35%", left: "85%", delay: "0.3s" }
+        ];
+
+        const memoryData = {
+            'kisses': Array(10).fill('https://images.unsplash.com/photo-1518568814500-bf0f8d125f46?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80'),
+            'fav-u': Array(10).fill('https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80'),
+            'fav-us': Array(10).fill('https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80'),
+            'aesthetic': Array(10).fill('https://images.unsplash.com/photo-1494774157365-9e04c6720e47?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80'),
+            'remember': Array(10).fill('https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80'),
+            'distance': Array(10).fill('https://images.unsplash.com/photo-1518199266791-5375a83190b7?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80'),
+            'replay': Array(10).fill('https://images.unsplash.com/photo-1529634597503-139d3726fed5?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80'),
+            'screenshots': Array(10).fill('https://images.unsplash.com/photo-1542596594-649edbc13630?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80')
+        };
+
+        let currentQIndex = 0;
+
+        // --- Intro Logic ---
+        function showNoModal() { document.getElementById('no-modal').classList.remove('hidden'); }
+        function hideNoModal() { document.getElementById('no-modal').classList.add('hidden'); }
+        function enterSite() {
+            document.getElementById('intro-overlay').classList.add('slide-up');
+            setTimeout(() => {
+                document.getElementById('main-site').classList.remove('opacity-0');
+                initHearts();
+                initScrollObserver();
+                initMemoryMap();
+                startHeartRain();
+                loadQuestion();
+            }, 500);
+        }
+
+        // --- Cursor & Visuals ---
+        function initHearts() {
+            if (window.matchMedia("(max-width: 768px)").matches) return;
+            const container = document.getElementById('cursor-hearts-container');
+            document.addEventListener('mousemove', (e) => {
+                const heart = document.createElement('div');
+                heart.classList.add('cursor-heart');
+                const size = Math.random() * 10 + 10; 
+                heart.style.width = `${size}px`;
+                heart.style.height = `${size}px`;
+                heart.style.left = `${e.clientX}px`;
+                heart.style.top = `${e.clientY}px`;
+                container.appendChild(heart);
+                setTimeout(() => { heart.style.opacity = '0.8'; }, 10);
+                setTimeout(() => { heart.style.opacity = '0'; setTimeout(() => heart.remove(), 300); }, 600);
+            });
+        }
+        function initScrollObserver() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
+            }, { threshold: 0.1 });
+            document.querySelectorAll('.pop-photo').forEach(photo => observer.observe(photo));
+        }
+        function initMemoryMap() {
+            const container = document.getElementById('map-pins-container');
+            memoryPins.forEach(pin => {
+                const pinEl = document.createElement('div');
+                pinEl.className = 'map-pin flex flex-col items-center group';
+                pinEl.style.top = pin.top; pinEl.style.left = pin.left; pinEl.style.animationDelay = pin.delay;
+                pinEl.innerHTML = `
+                    <div class="pin-bounce relative">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="#ec4899" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="drop-shadow-lg"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3" fill="white"/></svg>
+                    </div>
+                    <div class="mt-2 bg-white/90 backdrop-blur px-3 py-1 rounded-full shadow-sm border border-pink-100 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap"><span class="text-xs font-bold text-gray-700">${pin.title}</span></div>
+                `;
+                pinEl.onclick = () => openModal(pin.id, pin.title);
+                container.appendChild(pinEl);
+            });
+        }
+        function startHeartRain() {
+            const container = document.getElementById('heart-rain');
+            const heartSymbols = ['♥', '❤', '💖', '💕'];
+            setInterval(() => {
+                const heart = document.createElement('div');
+                heart.classList.add('falling-heart');
+                heart.innerText = heartSymbols[Math.floor(Math.random() * heartSymbols.length)];
+                heart.style.left = Math.random() * 100 + '%';
+                heart.style.animationDuration = (Math.random() * 3 + 4) + 's';
+                heart.style.opacity = Math.random() * 0.5 + 0.1;
+                heart.style.fontSize = (Math.random() * 20 + 10) + 'px';
+                container.appendChild(heart);
+                setTimeout(() => heart.remove(), 7000);
+            }, 300);
+        }
+
+        // --- Quiz Logic ---
+        function loadQuestion() {
+            document.getElementById('question-text').innerText = questions[currentQIndex].q;
+            document.getElementById('current-q-num').innerText = currentQIndex + 1;
+            document.getElementById('progress-text').innerText = ((currentQIndex + 1) / 5 * 100) + '%';
+            document.getElementById('progress-bar').style.width = ((currentQIndex + 1) / 5 * 100) + '%';
+            document.getElementById('answer-input').value = '';
+            document.getElementById('answer-input').focus();
+        }
+
+        function handleEnter(e) {
+            if (e.key === 'Enter') checkAnswer();
+        }
+
+        function checkAnswer() {
+            const input = document.getElementById('answer-input').value.trim().toLowerCase();
+            const correct = questions[currentQIndex].a.toLowerCase();
+            
+            if (input === correct) {
+                showFeedback(true);
+            } else {
+                showFeedback(false);
+            }
+        }
+
+        function showFeedback(isCorrect) {
+            const modal = document.getElementById('feedback-modal');
+            const icon = document.getElementById('feedback-icon');
+            const title = document.getElementById('feedback-title');
+            const msg = document.getElementById('feedback-message');
+            const btn = document.getElementById('feedback-btn');
+            
+            modal.classList.remove('hidden');
+            
+            if (isCorrect) {
+                icon.innerText = '🎉';
+                title.innerText = 'Well Done!!';
+                msg.innerText = 'Move on to the next question';
+                btn.innerText = 'Okay';
+                btn.className = 'w-full py-3 rounded-xl font-bold text-white transition-colors bg-green-500 hover:bg-green-600';
+                btn.onclick = () => {
+                    modal.classList.add('hidden');
+                    currentQIndex++;
+                    if (currentQIndex < questions.length) {
+                        loadQuestion();
+                    } else {
+                        finishQuiz();
+                    }
+                };
+            } else {
+                icon.innerText = '😅';
+                title.innerText = 'Oops!';
+                msg.innerText = 'You should know this about your BF';
+                btn.innerText = 'Try Again';
+                btn.className = 'w-full py-3 rounded-xl font-bold text-white transition-colors bg-red-500 hover:bg-red-600';
+                btn.onclick = () => {
+                    modal.classList.add('hidden');
+                    document.getElementById('answer-input').focus();
+                };
+            }
+        }
+
+        function finishQuiz() {
+            document.getElementById('quiz-container').style.display = 'none';
+            document.getElementById('quiz-success').classList.remove('hidden');
+            
+            // Trigger Plane Animation
+            setTimeout(() => {
+                document.getElementById('plane-animation').classList.remove('hidden');
+                
+                // Scroll to letter section
+                setTimeout(() => {
+                    const letterSection = document.getElementById('final-letter-section');
+                    letterSection.style.display = 'flex';
+                    // Force reflow
+                    void letterSection.offsetWidth;
+                    letterSection.classList.add('visible');
+                    
+                    // Show letter content after plane passes
+                    setTimeout(() => {
+                        document.querySelector('.love-letter-wrapper').classList.add('show');
+                        document.getElementById('plane-animation').style.display = 'none'; // Hide plane
+                    }, 2000);
+                    
+                }, 1000); // Wait for plane to start
+            }, 1000);
+        }
+
+        // --- Map Modal Logic ---
+        function openModal(id, title) {
+            const modal = document.getElementById('polaroid-modal');
+            const grid = document.getElementById('polaroid-grid');
+            const modalTitle = document.getElementById('modal-title');
+            modalTitle.innerText = title;
+            grid.innerHTML = '';
+            const images = memoryData[id] || [];
+            images.forEach((src, index) => {
+                const rotation = (Math.random() * 10) - 5;
+                const polaroid = document.createElement('div');
+                polaroid.className = 'polaroid w-full max-w-[200px] cursor-pointer';
+                polaroid.style.transform = `rotate(${rotation}deg)`;
+                polaroid.innerHTML = `<img src="${src}" alt="Memory" loading="lazy"><div class="polaroid-caption">Memory #${index + 1}</div>`;
+                grid.appendChild(polaroid);
+            });
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeModal() {
+            document.getElementById('polaroid-modal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+    </script>
+</body>
+</html>
